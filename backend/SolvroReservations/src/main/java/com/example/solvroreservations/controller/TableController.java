@@ -1,7 +1,8 @@
 package com.example.solvroreservations.controller;
 
-import com.example.solvroreservations.model.Table;
-import com.example.solvroreservations.repo.TableRepo;
+import com.example.solvroreservations.model.dto.TableDto;
+import com.example.solvroreservations.model.dto.TableDtoMapper;
+import com.example.solvroreservations.service.TableService;
 import com.example.solvroreservations.util.TableAvailability;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -15,10 +16,13 @@ import java.util.List;
 @RequestMapping("/tables")
 @RequiredArgsConstructor
 public class TableController {
-    private final TableRepo tableRepo;
+    private final TableService tableService;
 
     @GetMapping
-    public List<Table> getFreeTables(@RequestBody TableAvailability tableAvailability) {
-        return tableRepo.getFreeTables(tableAvailability.numOfSeats, tableAvailability.availableFrom, tableAvailability.availableTo);
+    public List<TableDto> getFreeTables(@RequestBody TableAvailability tableAvailability) {
+        System.out.println(tableAvailability + "from controller");
+        return TableDtoMapper.mapToTableDtos(
+                tableService.getFreeTables(tableAvailability)
+        );
     }
 }

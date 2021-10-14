@@ -7,6 +7,7 @@ import org.springframework.core.io.ClassPathResource;
 import org.springframework.core.io.Resource;
 import org.springframework.stereotype.Service;
 
+import javax.persistence.EntityNotFoundException;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -63,31 +64,42 @@ public class ReservationService {
                 s
         );
 
+        reservation.setStatus("active");
         return reservationRepo.save(reservation);
     }
 
-    public Reservation cancelReservation(int id, String newStatus) throws IOException {
-        Reservation reservation = reservationRepo.getById(id);
-        if (reservation.getDate().minusHours(2).isBefore(LocalDateTime.now())) {
-            throw new IllegalStateException("Reservation cannot be cancelled less than 2 hrs before its start");
-        }
+    public void cancelReservation(int id, String newStatus) throws IOException {
+        try {
+            Reservation reservation = reservationRepo.getById(id);
+            if (reservation.getDate().minusHours(2).isBefore(LocalDateTime.now())) {
+                throw new IllegalStateException("Reservation cannot be cancelled less than 2 hrs before its start");
+            }
+            if (!newStatus.equals("requested cancellation")) {
+                throw new IllegalArgumentException("newStatus best be equal to requested cancellation");
+            }
 
-        Resource resource = new ClassPathResource("static/delete_token_email.html");
-        InputStream is = resource.getInputStream();
-        BufferedReader bf = new BufferedReader(new InputStreamReader(is));
-        String s = "", line;
-        while((line = bf.readLine()) != null) {
-            s += line;
-        }
-        s = s.replaceFirst("%RESERVATION_START%", reservation.getDate().toString());
-        s = s.replaceFirst("%RESERVATION_END%", reservation.getDate().plusHours(reservation.getDuration()).toString());
-        s = s.replaceFirst("%TOKEN%", "12345678");
-        emailSenderService.send("cielo.armstrong50@ethereal.email", reservation.getEmail(), "Your reservation!",
-                s
-        );
+            reservation.setStatus(newStatus);
+            reservation.setCancellationToken(String.format("%06d", (int) (Math.random() * 1000000)));
 
-        reservation.setStatus(newStatus);
-        return reservationRepo.save(reservation);
+            Resource resource = new ClassPathResource("static/delete_token_email.html");
+            InputStream is = resource.getInputStream();
+            BufferedReader bf = new BufferedReader(new InputStreamReader(is));
+            String s = "", line;
+            while((line = bf.readLine()) != null) {
+                s += line;
+            }
+            s = s.replaceFirst("%RESERVATION_EMAIL%", reservation.getEmail());
+            s = s.replaceFirst("%RESERVATION_START%", reservation.getDate().toString());
+            s = s.replaceFirst("%RESERVATION_END%", reservation.getDate().plusHours(reservation.getDuration()).toString());
+            s = s.replaceFirst("%TOKEN%", reservation.getCancellationToken());
+            emailSenderService.send("cielo.armstrong50@ethereal.email", reservation.getEmail(), "Reservation cancel",
+                    s
+            );
+
+            reservationRepo.save(reservation);
+        } catch (EntityNotFoundException e) {
+            throw new IllegalArgumentException("reservation with id: " + id + " doesn't exist");
+        }
     }
 
     public List<Reservation> getAllReservationsByDay(LocalDate date) {
@@ -95,9 +107,20 @@ public class ReservationService {
     }
 
     public void deleteReservation(int id, String token) {
-        Reservation reservation = reservationRepo.getById(id);
-        if (reservation.getCancellationToken().equals(token) && reservation.getStatus().equals("requested cancellation")) {  // TODO token produces NullPointerExc
+        try {
+            Reservation reservation = reservationRepo.getById(id);
+            if (token == null) {
+                throw new IllegalArgumentException("cancellation token is null");
+            }
+            if (!reservation.getCancellationToken().equals(token)) {
+                throw new IllegalArgumentException("incorrect cancellation token");
+            }
+            if (!reservation.getStatus().equals("requested cancellation")) {
+                throw new IllegalStateException("generate your token before deleting");
+            }
             reservationRepo.deleteById(id);
+        } catch (EntityNotFoundException e) {
+            throw new IllegalArgumentException("reservation with id: " + id + " doesn't exist");
         }
     }
 }

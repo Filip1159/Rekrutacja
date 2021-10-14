@@ -36,18 +36,4 @@ public class Reservation {
 
     private String status;
     private String cancellationToken;
-
-    public Reservation(LocalDateTime date, int duration, int seatNumber, String fullName, String phone, String email, int numberOfSeats) {
-        this.date = date;
-        this.duration = duration;
-        this.tableNumber = seatNumber;
-        this.seatNumber = 1234;    // TODO what is the difference between seat and table number
-        this.fullName = fullName;
-        this.phone = phone;
-        this.email = email;
-        this.numberOfSeats = numberOfSeats;
-        this.status = "active";
-        this.cancellationToken = String.format("%06d", (int) (Math.random() * 1000000));  // TODO why token is null
-    }
-
 }

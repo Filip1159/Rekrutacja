@@ -13,6 +13,7 @@ import java.util.List;
 @NoArgsConstructor
 @Getter
 @Setter
+@ToString
 @javax.persistence.Table(name = "tables")
 public class Table {
     @Id
@@ -21,6 +22,6 @@ public class Table {
     private int maxNumberOfSeats;
 
     @OneToMany
-    @JoinColumn(name = "tableNumber")
+    @JoinColumn(name = "seatNumber")
     private List<Reservation> reservations;
 }
