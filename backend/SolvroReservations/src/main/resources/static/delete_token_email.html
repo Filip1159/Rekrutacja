@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Reservation</title>
+    <title>Title</title>
     <style>
         * {
             font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
@@ -22,13 +22,11 @@
     </style>
 </head>
 <body>
-    <h1>Reservation completed</h1>
-    <span>Thank you for your choice. Our service is getting ready for your visit at:</span>
-    <span>%RESERVATION_START%</span>
-    <span>to:</span>
-    <span>%RESERVATION_END%</span>
-
-    <h3>Your unique reservation ID:</h3>
-    <span>%RESERVATION_ID%</span>
+<h1>Hi, %RESERVATION_EMAIL%!</h1>
+<h3> We received cancellation request for your reservation</h3>
+<span>Time: %RESERVATION_START%</span>
+<span>to %RESERVATION_END%</span>
+<span>Here is your cancellation token:</span>
+<h3>%TOKEN%</h3>
 </body>
 </html>

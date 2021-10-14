@@ -13,13 +13,12 @@ import java.util.List;
 @NoArgsConstructor
 @Getter
 @Setter
-@ToString
 @javax.persistence.Table(name = "tables")
 public class Table {
     @Id
-    private Integer number;
-    private Integer minNumberOfSeats;
-    private Integer maxNumberOfSeats;
+    private int number;
+    private int minNumberOfSeats;
+    private int maxNumberOfSeats;
 
     @OneToMany
     @JoinColumn(name = "tableNumber")
