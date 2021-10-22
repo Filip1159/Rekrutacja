@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <style>
+        * {
+            font-family: 'Lucida Sans', 'Lucida Sans Regular', 'Lucida Grande', 'Lucida Sans Unicode', Geneva, Verdana, sans-serif;
+        }
+        span {
+            display: block;
+        }
+        h1, h3, span {
+            margin-left: auto;
+            margin-right: auto;
+            text-align: center;
+        }
+        body {
+            background: linear-gradient(#A3A5F5, #FFFFFF);
+            height: 100vh;
+        }
+    </style>
+</head>
+<body>
+<h1 th:text="${'Hi, ' + reservationFullName}"></h1>
+<h3> We received cancellation request for your reservation</h3>
+<span th:text="${'Time: ' + reservationStart}"></span>
+<span th:text="${'to: ' + reservationEnd}"></span>
+<span>Here is your cancellation token:</span>
+<h3 th:text="${token}"></h3>
+</body>
+</html>

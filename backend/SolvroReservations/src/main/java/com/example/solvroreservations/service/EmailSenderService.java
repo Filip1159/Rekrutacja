@@ -1,29 +1,33 @@
 package com.example.solvroreservations.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
+import com.example.solvroreservations.util.Mail;
+import lombok.RequiredArgsConstructor;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+import org.thymeleaf.context.Context;
+import org.thymeleaf.spring5.SpringTemplateEngine;
 
 import javax.mail.MessagingException;
 import javax.mail.internet.MimeMessage;
 
 @Service
+@RequiredArgsConstructor
 public class EmailSenderService {
-    @Autowired
-    private JavaMailSender mailSender;
 
-    public void send(String from, String to, String subject, String content) {
-        try {
-            MimeMessage mimeMessage = mailSender.createMimeMessage();
-            MimeMessageHelper mimeMessageHelper = new MimeMessageHelper(mimeMessage, false, "utf-8");
-            mimeMessageHelper.setFrom(from);
-            mimeMessageHelper.setTo(to);
-            mimeMessageHelper.setSubject(subject);
-            mimeMessage.setContent(content, "text/html");
-            mailSender.send(mimeMessage);
-        } catch (MessagingException me) {
-            me.printStackTrace();
-        }
+    private final JavaMailSender mailSender;
+    private final SpringTemplateEngine thymeleafTemplateEngine;
+
+    public void sendMessageUsingThymeleafTemplate(Mail mail) throws MessagingException {
+        Context thymeleafContext = new Context();
+        thymeleafContext.setVariables(mail.getAttributes());
+        String htmlBody = thymeleafTemplateEngine.process(mail.getTemplateName() + ".html", thymeleafContext);
+
+        MimeMessage message = mailSender.createMimeMessage();
+        MimeMessageHelper helper = new MimeMessageHelper(message, true, "UTF-8");
+        helper.setTo(mail.getTo());
+        helper.setSubject(mail.getSubject());
+        helper.setText(htmlBody, true);
+        mailSender.send(message);
     }
 }
