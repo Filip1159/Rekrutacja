@@ -3,14 +3,22 @@ package com.example.solvroreservations.service;
 import com.example.solvroreservations.model.Reservation;
 import com.example.solvroreservations.repo.ReservationRepo;
 import com.example.solvroreservations.util.Mail;
+import com.google.i18n.phonenumbers.PhoneNumberUtil;
+import org.apache.commons.validator.routines.EmailValidator;
 import org.springframework.stereotype.Service;
 
 import javax.mail.MessagingException;
+import javax.mail.SendFailedException;
 import javax.persistence.EntityNotFoundException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/**
+ * @author Filip Wisniewski
+ * Service layer class
+ * Here comes user input verification and sending e-mails to clients
+ */
 @Service
 public class ReservationService {
 
@@ -27,9 +35,22 @@ public class ReservationService {
         this.createMail = createMail;
     }
 
-    public Reservation makeReservation(Reservation reservation) throws MessagingException {
-        if (reservation.getSeatNumber() < 1 || reservation.getSeatNumber() > 53) {
-            throw new IllegalArgumentException("invalid table number: " + reservation.getSeatNumber());
+    /**
+     * @param reservation contains reservation details
+     * @return given reservation with assigned id
+     * @throws IllegalStateException forbidden user request
+     * @throws IllegalArgumentException incorrect parameters specified by client
+     * @throws SendFailedException internal error occurred while sending e-mail to client
+     */
+    public Reservation makeReservation(Reservation reservation) throws SendFailedException {
+        if (reservation.getTableNumber() < 1 || reservation.getTableNumber() > 53) {
+            throw new IllegalArgumentException("invalid table number: " + reservation.getTableNumber());
+        }
+        if (!EmailValidator.getInstance().isValid(reservation.getEmail())) {
+            throw new IllegalArgumentException("invalid email address: " + reservation.getEmail());
+        }
+        if (!PhoneNumberUtil.getInstance().isPossibleNumber(reservation.getPhone(), "PL")) {
+            throw new IllegalArgumentException("invalid phone number: " + reservation.getPhone());
         }
         LocalDateTime reservationStart = reservation.getDate();
         LocalDateTime reservationEnd = reservation.getDate().plusHours(reservation.getDuration());
@@ -45,13 +66,13 @@ public class ReservationService {
         if (reservationStart.getHour() < 11 || reservationEnd.getHour() > 21) {
             throw new IllegalArgumentException("reservation doesn't match our working hours");
         }
-        List<Reservation> reservationsThisDay = reservationRepo.getReservationsByTableNumberAndTime(
+        List<Reservation> reservationsThisTime = reservationRepo.getReservationsByTableNumberAndTime(
                 reservation.getTableNumber(),
                 reservation.getDate(),
                 reservation.getDuration()
         );
-        if (!reservationsThisDay.isEmpty()) {
-            throw new IllegalStateException("Other reservations this time: " + reservationsThisDay.get(0));
+        if (!reservationsThisTime.isEmpty()) {
+            throw new IllegalStateException("other reservations this time: " + reservationsThisTime.size());
         }
 
         reservation.setStatus("active");
@@ -61,16 +82,30 @@ public class ReservationService {
         createMail.setAttribute("reservationStart", reservationStart.toString());
         createMail.setAttribute("reservationEnd", reservationEnd.toString());
         createMail.setAttribute("reservationId", String.format("%06d", reservation.getId()));
-        emailSenderService.sendMessageUsingThymeleafTemplate(createMail);
-
+        try {
+            emailSenderService.send(createMail);
+        } catch (MessagingException me) {
+            throw new SendFailedException("something went wrong while sending email to You");
+        }
         return reservation;
     }
 
+    /**
+     * @param date day which reservations come from
+     * @return list of reservations that day
+     */
     public List<Reservation> getAllReservationsByDay(LocalDate date) {
         return reservationRepo.findAllByDay(date);
     }
 
-    public void cancelReservation(int id, String newStatus) throws MessagingException {
+    /**
+     * @param id of reservation which status will be changed
+     * @param newStatus replace reservation status with this value
+     * @throws IllegalStateException forbidden user request
+     * @throws IllegalArgumentException incorrect parameters specified by client
+     * @throws SendFailedException internal error occurred while sending e-mail to client
+     */
+    public void cancelReservation(int id, String newStatus) throws SendFailedException {
         if (!reservationRepo.existsById(id)) {
             throw new EntityNotFoundException("reservation with id: " + id + " doesn't exist");
         }
@@ -91,14 +126,23 @@ public class ReservationService {
         deleteMail.setAttribute("reservationEnd",
                 reservation.getDate().plusHours(reservation.getDuration()).toString());
         deleteMail.setAttribute("token", reservation.getCancellationToken());
-        emailSenderService.sendMessageUsingThymeleafTemplate(deleteMail);
-
+        try {
+            emailSenderService.send(deleteMail);
+        } catch (MessagingException me) {
+            throw new SendFailedException("something went wrong while sending email to You");
+        }
         reservationRepo.save(reservation);
     }
 
+    /**
+     * @param id of reservation to remove
+     * @param token verificationCode user receives from put endpoint
+     * @throws IllegalStateException forbidden user request
+     * @throws IllegalArgumentException incorrect parameters specified by client
+     */
     public void deleteReservation(int id, String token) {
         if (!reservationRepo.existsById(id)) {
-            throw new EntityNotFoundException("reservation with id: " + id + " doesn't exist");
+            throw new IllegalArgumentException("reservation with id: " + id + " doesn't exist");
         }
         Reservation reservation = reservationRepo.getById(id);
         if (token == null) {

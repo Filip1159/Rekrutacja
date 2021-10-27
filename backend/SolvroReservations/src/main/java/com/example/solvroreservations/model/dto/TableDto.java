@@ -1,11 +1,14 @@
 package com.example.solvroreservations.model.dto;
 
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.Setter;
 
-@AllArgsConstructor
+/**
+ * @author Filip Wisniewski
+ * Data transfer object for Reservation entity
+ * Hidden fields are: list of reservations
+ */
 @Getter
 @Setter
 @Builder

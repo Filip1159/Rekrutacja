@@ -14,12 +14,20 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 
+/**
+ * @author Filip Wisniewski
+ * Client interaction layer class
+ */
 @RestController
 @RequestMapping("/tables")
 @RequiredArgsConstructor
 public class TableController {
     private final TableService tableService;
 
+    /**
+     * @param tableAvailability specifies client's details about seats and time when table is supposed to available
+     * @return list of available tables satisfying given requirements
+     */
     @GetMapping
     public List<TableDto> getFreeTables(@RequestBody TableAvailability tableAvailability) {
         try {

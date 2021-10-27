@@ -5,6 +5,12 @@ import lombok.Setter;
 
 import java.util.HashMap;
 
+/**
+ * @author Filip Wisniewski
+ * Model class containing information about e-mail to be sent
+ * Includes information about sender, destination address and thymeleaf template name
+ * thet should be used to generate html body using given attributes
+ */
 @Getter
 @Setter
 public class Mail {

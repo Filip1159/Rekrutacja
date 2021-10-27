@@ -14,7 +14,6 @@ import org.springframework.core.io.Resource;
 import java.io.BufferedReader;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
 import java.util.List;
 
 @SpringBootApplication
@@ -24,23 +23,22 @@ public class SolvroReservationsApplication {
         SpringApplication.run(SolvroReservationsApplication.class, args);
     }
 
+    /**
+     * loads list of tables into H2 in-memory database on application start
+     */
     @Bean
     CommandLineRunner runner(TableRepo tableRepo) {
         return args -> {
             Resource resource = new ClassPathResource("tables.json");
             InputStream is = resource.getInputStream();
             BufferedReader bf = new BufferedReader(new InputStreamReader(is));
-            String s = "", line;
+            StringBuilder builder = new StringBuilder();
+            String line;
             while((line = bf.readLine()) != null) {
-                s += line;
+                builder.append(line);
             }
             ObjectMapper objectMapper = new ObjectMapper();
-            Table[] tables = objectMapper.readValue(s, Table[].class);
-
-            for ( Table t : tables ) {
-                System.out.println(t);
-            }
-
+            Table[] tables = objectMapper.readValue(builder.toString(), Table[].class);
             tableRepo.saveAll(List.of(tables));
         };
     }

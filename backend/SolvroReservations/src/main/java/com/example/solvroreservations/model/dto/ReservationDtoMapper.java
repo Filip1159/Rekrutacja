@@ -5,6 +5,10 @@ import com.example.solvroreservations.model.Reservation;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * @author Filip Wisniewski
+ * Data transfer object mapper
+ */
 public class ReservationDtoMapper {
     private ReservationDtoMapper(){}
 
@@ -16,7 +20,6 @@ public class ReservationDtoMapper {
                 .fullName(reservation.getFullName())
                 .numberOfSeats(reservation.getNumberOfSeats())
                 .phone(reservation.getPhone())
-                .seatNumber(reservation.getSeatNumber())
                 .tableNumber(reservation.getTableNumber())
                 .build();
     }

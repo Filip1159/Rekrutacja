@@ -5,6 +5,10 @@ import com.example.solvroreservations.model.Table;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * @author Filip Wisniewski
+ * Data transfer object mapper
+ */
 public class TableDtoMapper {
     private TableDtoMapper() {}
 
